@@ -5,6 +5,7 @@ import com.grace.mall.dao.ProductDao;
 import com.grace.mall.dao.UserDao;
 import com.grace.mall.dto.BuyItem;
 import com.grace.mall.dto.OrderRequest;
+import com.grace.mall.dto.OrderRequestParam;
 import com.grace.mall.model.Order;
 import com.grace.mall.model.OrderItem;
 import com.grace.mall.model.Product;
@@ -75,5 +76,22 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public Order getOrderById(Integer orderId) {
         return orderDao.getOrderById(orderId);
+    }
+
+    @Override
+    public List<Order> getOrders(OrderRequestParam orderRequestParam) {
+        if (orderRequestParam.getUserId() != null) {
+            User user = userDao.getUserById(orderRequestParam.getUserId());
+            if (user == null) {
+                log.warn("使用者 {} 不存在", orderRequestParam.getUserId());
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            }
+        }
+        List<Order> orderList = orderDao.getOrders(orderRequestParam);
+        for (Order order : orderList) {
+            List<OrderItem> orderItemList = orderDao.getOrderItemByOrderId(order.getOrderId());
+            order.setOrderItemList(orderItemList);
+        }
+        return orderList;
     }
 }
